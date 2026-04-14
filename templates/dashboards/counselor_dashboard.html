@@ -1,0 +1,117 @@
+<!-- templates/dashboards/counselor_dashboard.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-12">
+    
+    <!-- Header -->
+    <header class="flex justify-between items-end mb-12" data-aos="fade-down">
+        <div>
+            <span class="text-brand-600 font-bold tracking-widest text-xs uppercase">Counselor Portal</span>
+            <h1 class="text-3xl font-bold tracking-tight text-zinc-900 mt-1">Intervention Hub</h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="text-right hidden md:block">
+                <p class="text-sm font-bold text-zinc-900">{{ user.get_full_name }}</p>
+                <p class="text-xs text-zinc-500">Academic Counselor</p>
+            </div>
+            <a href="{% url 'logout' %}" class="p-2.5 bg-white border border-zinc-200 text-zinc-500 rounded-2xl hover:text-red-500 hover:border-red-100 transition-all">
+                <i data-lucide="log-out" class="w-5 h-5"></i>
+            </a>
+        </div>
+    </header>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+        <div class="md:col-span-2 bg-zinc-900 text-white p-8 rounded-[2rem] shadow-xl relative overflow-hidden" data-aos="fade-right">
+            <div class="relative z-10">
+                <h3 class="text-lg font-medium opacity-80">Priority Students</h3>
+                <h2 class="text-5xl font-bold mt-2 tracking-tighter">{{ reports.count }}</h2>
+                <p class="text-sm opacity-60 mt-4 flex items-center gap-2">
+                    <i data-lucide="alert-circle" class="w-4 h-4 text-brand-400"></i> Needs immediate attention
+                </p>
+            </div>
+            <!-- Decorative circle -->
+            <div class="absolute top-[-20%] right-[-10%] w-40 h-40 bg-brand-500/20 rounded-full blur-3xl"></div>
+        </div>
+        
+        <div class="bg-white p-8 rounded-[2rem] border border-zinc-100 shadow-sm" data-aos="fade-up" data-aos-delay="100">
+            <p class="text-xs font-bold text-zinc-400 uppercase tracking-widest">High Risk</p>
+            <h2 class="text-4xl font-bold text-red-500 mt-2">
+                {{ reports.all|dictsortreversed:"risk_level"|first|default:"0" }}
+            </h2>
+        </div>
+
+        <div class="bg-white p-8 rounded-[2rem] border border-zinc-100 shadow-sm" data-aos="fade-up" data-aos-delay="200">
+            <p class="text-xs font-bold text-zinc-400 uppercase tracking-widest">Efficiency</p>
+            <h2 class="text-4xl font-bold text-zinc-900 mt-2">94%</h2>
+        </div>
+    </div>
+
+    <!-- Main List -->
+    <div class="bg-white rounded-[2rem] p-8 border border-zinc-100 shadow-sm" data-aos="fade-up">
+        <div class="flex justify-between items-center mb-8">
+            <h3 class="text-xl font-bold text-zinc-900">Queue for Review</h3>
+            <div class="relative">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-zinc-400"></i>
+                <input type="text" placeholder="Filter students..." class="pl-10 pr-4 py-2 bg-zinc-50 border-none rounded-full text-sm focus:ring-2 focus:ring-brand-500 outline-none w-64 transition-all">
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="text-xs font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-50">
+                        <th class="pb-4">Student Identity</th>
+                        <th class="pb-4 text-center">Risk Factor</th>
+                        <th class="pb-4 text-center">Latest SGPA</th>
+                        <th class="pb-4 text-right pr-4">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in reports %}
+                    <tr class="group hover:bg-zinc-50/50 transition-all duration-300">
+                        <td class="py-6">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-2xl bg-zinc-900 flex items-center justify-center text-white font-bold shadow-lg">
+                                    {{ report.student.user.first_name|first }}
+                                </div>
+                                <div>
+                                    <p class="font-bold text-zinc-900">{{ report.student.user.get_full_name }}</p>
+                                    <p class="text-xs text-zinc-500">ID: {{ report.student.enrollment_number }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-6 text-center">
+                            {% if report.risk_level == 'HIGH' %}
+                            <span class="px-4 py-1.5 rounded-full text-[10px] font-bold bg-red-50 text-red-600 border border-red-100">HIGH PRIORITY</span>
+                            {% else %}
+                            <span class="px-4 py-1.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-100">STABILIZING</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-6 text-center font-mono font-bold text-zinc-700">
+                            {{ report.academic_record.sgpa }}
+                        </td>
+                        <td class="py-6 text-right pr-4">
+                            <a href="{% url 'add_counseling_note' report.student.id %}" class="inline-flex items-center gap-2 px-4 py-2 bg-brand-50 text-brand-600 rounded-xl font-bold text-xs hover:bg-brand-600 hover:text-white transition-all group">
+                                <i data-lucide="message-square" class="w-4 h-4"></i>
+                                Open Session
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="py-20 text-center">
+                            <div class="flex flex-col items-center opacity-30">
+                                <i data-lucide="check-circle-2" class="w-12 h-12 mb-4"></i>
+                                <p class="font-medium">All students are currently stable.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

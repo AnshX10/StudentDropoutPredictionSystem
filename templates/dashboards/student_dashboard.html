@@ -1,0 +1,123 @@
+<!-- templates/dashboards/student_dashboard.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-12">
+    
+    <!-- Profile & Welcome -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12" data-aos="fade-down">
+        <div class="flex items-center gap-6">
+            <div class="relative">
+                <img src="https://ui-avatars.com/api/?name={{ user.first_name }}+{{ user.last_name }}&background=18181b&color=fff" class="w-20 h-20 rounded-[2rem] shadow-2xl">
+                <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 border-4 border-surface rounded-full"></div>
+            </div>
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight text-zinc-900">Hey, {{ user.first_name }}!</h1>
+                <p class="text-zinc-500">Here’s your academic standing for this semester.</p>
+            </div>
+        </div>
+        <a href="{% url 'logout' %}" class="px-6 py-3 bg-zinc-900 text-white rounded-2xl text-sm font-bold shadow-xl shadow-zinc-900/20 hover:scale-105 transition-all">Sign Out</a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        <!-- Sidebar: Risk & Basic Info -->
+        <div class="space-y-6">
+            <!-- Risk Bento Card -->
+            <div class="bg-white p-8 rounded-[2rem] border border-zinc-100 shadow-sm" data-aos="fade-right">
+                <h3 class="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-6">Current Status</h3>
+                {% if prediction %}
+                    <div class="flex flex-col items-center text-center">
+                        <div class="w-24 h-24 rounded-full border-[6px] border-zinc-50 flex items-center justify-center relative mb-4">
+                            <span class="text-2xl font-black {% if prediction.risk_level == 'HIGH' %}text-red-500{% elif prediction.risk_level == 'MEDIUM' %}text-amber-500{% else %}text-emerald-500{% endif %}">
+                                {{ prediction.risk_score|floatformat:0 }}%
+                            </span>
+                        </div>
+                        <p class="font-bold text-zinc-900">{{ prediction.get_risk_level_display }}</p>
+                        <p class="text-xs text-zinc-400 mt-1">Based on latest performance</p>
+                        <div class="mt-4">
+                            <a href="{% url 'download_report' student.id %}" class="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white rounded-2xl text-sm font-medium hover:bg-zinc-800 transition-colors">
+                                <i data-lucide="download" class="w-4 h-4"></i> Download PDF
+                            </a>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="text-zinc-400 text-sm italic">Analysis pending...</p>
+                {% endif %}
+            </div>
+
+            <!-- Profile Bento Card -->
+            <div class="bg-zinc-900 text-white p-8 rounded-[2rem] shadow-xl" data-aos="fade-right" data-aos-delay="100">
+                <h3 class="text-xs font-bold opacity-50 uppercase tracking-widest mb-6">Profile Details</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between border-b border-zinc-800 pb-2">
+                        <span class="text-sm opacity-60">ID</span>
+                        <span class="text-sm font-bold">{{ student.enrollment_number }}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-zinc-800 pb-2">
+                        <span class="text-sm opacity-60">Dept</span>
+                        <span class="text-sm font-bold">{{ student.department }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm opacity-60">Batch</span>
+                        <span class="text-sm font-bold">{{ student.batch_year }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="md:col-span-2 space-y-8">
+            
+            <!-- Academic History Bento Card -->
+            <div class="bg-white p-8 rounded-[2rem] border border-zinc-100 shadow-sm" data-aos="fade-up">
+                <h3 class="text-lg font-bold text-zinc-900 mb-6 flex items-center gap-2">
+                    <i data-lucide="bar-chart-3" class="w-5 h-5 text-brand-500"></i> Academic Performance
+                </h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {% for record in records|slice:":4" %}
+                    <div class="p-4 bg-zinc-50 rounded-2xl text-center group hover:bg-zinc-900 transition-all duration-500">
+                        <p class="text-[10px] font-bold text-zinc-400 uppercase group-hover:text-brand-400 transition-colors">Sem {{ record.semester }}</p>
+                        <h4 class="text-xl font-black text-zinc-900 group-hover:text-white transition-colors">{{ record.sgpa }}</h4>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Counselor Feedback Timeline -->
+            <div class="bg-white p-8 rounded-[2rem] border border-zinc-100 shadow-sm" data-aos="fade-up" data-aos-delay="200">
+                <h3 class="text-lg font-bold text-zinc-900 mb-8 flex items-center gap-2">
+                    <i data-lucide="message-circle" class="w-5 h-5 text-brand-500"></i> Counselor Feedback
+                </h3>
+                
+                <div class="relative border-l-2 border-zinc-100 ml-4 space-y-10">
+                    {% for session in sessions %}
+                    <div class="relative pl-8">
+                        <!-- Timeline Dot -->
+                        <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-white border-4 border-brand-500"></div>
+                        
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h5 class="font-bold text-zinc-900 text-sm">{{ session.session_date|date:"F d, Y" }}</h5>
+                                <p class="text-xs text-zinc-400">Consultation with Counselor {{ session.counselor.last_name }}</p>
+                            </div>
+                            <span class="px-3 py-1 bg-brand-50 text-brand-600 rounded-full text-[10px] font-bold uppercase tracking-tighter">
+                                {{ session.get_progress_status_display }}
+                            </span>
+                        </div>
+                        <div class="bg-zinc-50 p-4 rounded-2xl text-sm text-zinc-600 leading-relaxed italic">
+                            "{{ session.notes }}"
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-10">
+                        <p class="text-sm text-zinc-400">No counseling records found.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
