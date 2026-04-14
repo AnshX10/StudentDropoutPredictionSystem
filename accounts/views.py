@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count
+from django.db.models import Count, Q
 from academics.models import StudentProfile
 from predictions.models import PredictionReport
 from academics.models import AcademicRecord
@@ -81,13 +81,14 @@ def admin_dashboard(request):
 @allowed_users(allowed_roles=['FACULTY'])
 def faculty_dashboard(request):
     query = request.GET.get('q') # Get the search text from URL
+    # Optimize queries: fetch related `user` and prefetch academic records and their prediction
+    base_qs = StudentProfile.objects.select_related('user').prefetch_related('academic_records__predictionreport')
+
     if query:
-        # Filter by name or enrollment number
-        students = StudentProfile.objects.filter(
-            user__first_name__icontains=query
-        ) | StudentProfile.objects.filter(enrollment_number__icontains=query)
+        # Filter by name or enrollment number using a single optimized queryset
+        students = base_qs.filter(Q(user__first_name__icontains=query) | Q(enrollment_number__icontains=query))
     else:
-        students = StudentProfile.objects.all()
+        students = base_qs.all()
     
     return render(request, 'dashboards/faculty_dashboard.html', {'students': students, 'query': query})
 
@@ -97,7 +98,8 @@ def counselor_dashboard(request):
         return redirect('login')
         
     # Fetch all prediction reports that are HIGH or MEDIUM risk, ordered by newest
-    at_risk_reports = PredictionReport.objects.filter(
+    # Optimize by select_related to include the linked student user and academic record
+    at_risk_reports = PredictionReport.objects.select_related('student__user', 'academic_record').filter(
         risk_level__in=['HIGH', 'MEDIUM']
     ).order_by('-generated_at')
     

@@ -18,6 +18,13 @@
             <p class="text-sm text-zinc-500 mt-1">Predict. Intervene. Retain.</p>
         </div>
 
+        <!-- Show Form Errors Here -->
+        {% if form.errors %}
+            <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm text-center">
+                Username or Password incorrect. Please try again.
+            </div>
+        {% endif %}
+
         <form method="POST" class="space-y-5">
             {% csrf_token %}
             <div>
